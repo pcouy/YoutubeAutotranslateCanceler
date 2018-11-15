@@ -5,7 +5,8 @@
 // @description  try to take over the world!
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
 
 (function() {
@@ -14,12 +15,16 @@
     /*
     Get a YouTube Data v3 API key from https://console.developers.google.com/apis/library/youtube.googleapis.com?q=YoutubeData
     */
-    const API_KEY = "YOUR API_KEY HERE";
-    
-    
-    const url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + API_KEY;
+    while(GM_getValue("api_key") === undefined || GM_getValue("api_key") === null || GM_getValue("api_key") === ""){
+        GM_setValue("api_key", prompt("Enter your API key"));
+    }
+    const API_KEY = GM_getValue("api_key");
+
+
+    var url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + API_KEY;
 
     var alreadyChanged = [];
+    var running = true;
 
     function changeTitles(){
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
@@ -64,6 +69,19 @@
                     }else{
                         console.log(requestUrl);
                         console.log(data);
+                        if(data.error != undefined && (data.error.errors[0].domain == "usageLimits" || data.error.errors[0].reason == "keyInvalid")){
+                            clearInterval(intervalID);
+                            if(running){
+                                running = false;
+                                var tmp = prompt("Enter your API key");
+                                if(tmp !== null && tmp !== "" && tmp !== undefined){
+                                    GM_setValue("api_key", tmp);
+                                    url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + GM_getValue("api_key");
+                                }
+                                running = true;
+                            }
+                            intervalID = setInterval(changeTitles, 1000);
+                        }
                     }
                 }
             };
@@ -71,9 +89,7 @@
             xhr.send();
         }
     }
-    changeTitles();
-    var obs = new MutationObserver(changeTitles);
-    obs.observe(document.body, {childList: true, subtree: true});
+    var intervalID = setInterval(changeTitles, 1000);
 
 })();
 

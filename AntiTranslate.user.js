@@ -33,7 +33,7 @@
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
             return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
         } );
-        links = links.concat(spans);
+        links = links.concat(spans).slice(0,30);
 
         if(links.length > 0){
             console.log('Changing titles');

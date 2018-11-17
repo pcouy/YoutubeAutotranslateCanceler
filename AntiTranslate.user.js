@@ -2,7 +2,7 @@
 // @name         Youtube title translate reverser
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  try to take over the world!
+// @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
 // @grant        GM_setValue

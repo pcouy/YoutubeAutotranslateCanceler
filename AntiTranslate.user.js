@@ -16,7 +16,7 @@
     Get a YouTube Data v3 API key from https://console.developers.google.com/apis/library/youtube.googleapis.com?q=YoutubeData
     */
     while(GM_getValue("api_key") === undefined || GM_getValue("api_key") === null || GM_getValue("api_key") === ""){
-        GM_setValue("api_key", prompt("Enter your API key"));
+        GM_setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key."));
     }
     const API_KEY = GM_getValue("api_key");
 
@@ -73,7 +73,7 @@
                             clearInterval(intervalID);
                             if(running){
                                 running = false;
-                                var tmp = prompt("Enter your API key");
+                                var tmp = prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key.");
                                 if(tmp !== null && tmp !== "" && tmp !== undefined){
                                     GM_setValue("api_key", tmp);
                                     url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + GM_getValue("api_key");

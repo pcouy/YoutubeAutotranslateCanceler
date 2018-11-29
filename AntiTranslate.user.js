@@ -161,46 +161,8 @@
         return replacedText;
     }
 
-    function setupDOMListener (callback) {
-        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-        if( MutationObserver ){
-            var obs = new MutationObserver(callback);
-            obs.observe(document.body, { childList:true, subtree:true });
-        }
-        else if( window.addEventListener ){
-            document.body.addEventListener('DOMNodeInserted', callback, false);
-            document.body.addEventListener('DOMNodeRemoved', callback, false);
-        }
-    }
-
-
-
-    // Execute manually during usual load time
-    changeTitles ();
-    setTimeout(changeTitles, 500);
-    setTimeout(changeTitles, 1000);
-    setTimeout(changeTitles, 2000);
-
-
-    // Setup DOM listener for the rest of the lifetime
-    // But so that very fast consecutive DOM changes (50ms margin) are grouped together
-    // And an API request is only issued once for all of them
-    var DOM_CHANGED = false;
-    var DOM_CHANGE_TIMER_ID;
-    setTimeout(() => {
-        setupDOMListener (() => {
-            DOM_CHANGED = true;
-            clearTimeout(DOM_CHANGE_TIMER_ID);
-            DOM_CHANGE_TIMER_ID = setTimeout (() => {
-                if (DOM_CHANGED){
-                    DOM_CHANGED = false;
-                    changeTitles ();
-                }
-            }, 50);
-        });
-    }, 2000);
-
-
-
+    // Execute every seconds in case new content has been added to the page
+    // DOM listener would be good if it was not for the fact that Youtube changes its DOM frequently
+    setInterval(changeTitles, 1000);
 })();
 

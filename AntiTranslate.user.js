@@ -29,11 +29,22 @@
 
     var url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + API_KEY;
 
-    var changedTitle;
-    var changedDescription
-    var alreadyChanged = [];
+	var changedTitle;
+	var changedDescription;
+	var alreadyChanged;
+	var lastTitle;
+	function resetChanged(){
+        console.log("Changing page : resetting changed elements list");
+		changedTitle = false;
+		changedDescription = false;
+		alreadyChanged = [];
+		lastTitle = window.document.title;
+	}
+	resetChanged();
+
 
     function changeTitles(){
+		if(lastTitle !== window.document.title) resetChanged();
 
         // MAIN TITLE
         if (!changedTitle && window.location.href.includes ("/watch")){

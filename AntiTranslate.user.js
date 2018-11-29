@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name         Youtube title fixer
-// @namespace    http://tampermonkey.net/
+// @name         Youtube Auto-translate Canceler
+// @namespace    https://github.com/pcouy/YoutubeAutotranslateCanceler/
 // @version      0.1
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy

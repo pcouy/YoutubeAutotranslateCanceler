@@ -55,7 +55,7 @@
                     var data = JSON.parse(xhr.responseText);
                     if(data.kind == "youtube#videoListResponse"){
                         data = data.items;
-                        var titleStore = {}
+                        var titleStore = {};
                         data = data.forEach( v => {
                             titleStore[v.id] = v.snippet.title;
                         } );

@@ -119,7 +119,7 @@
                             else console.log ("Failed to find main video description!");
                         }
 
-                        var titleStore = {}
+                        var titleStore = {};
                         data = data.forEach( v => {
                             titleStore[v.id] = v.snippet.title;
                         } );

@@ -142,6 +142,7 @@
                         // But if the first query is a fail then it won't try repeatedly
                         NO_API_KEY = !API_KEY_VALID;
                         if (NO_API_KEY) {
+							GM_setValue('api_key', '');
                             console.log("API Key Fail! Please Reload!");
                         }
                     }

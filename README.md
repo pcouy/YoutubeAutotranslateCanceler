@@ -1,5 +1,8 @@
 # YoutubeAutotranslateCanceler
 
+> An API Client may provide an option to translate a video title to other languages. However, the API Client must not add any such translations without the user's consent. In addition, if the API Client's default behavior is to enable the option to translate the video title, it must clearly present to the user an easy way to disable that behavior.  
+> -- From https://developers.google.com/youtube/terms/developer-policies
+
 
 I was annoyed by YouTube changing video titles to poorly auto-translated versions, so I made this script using YouTube Data API to retrive original titles and change them back.
 

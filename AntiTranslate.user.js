@@ -58,12 +58,12 @@
 
         // MAIN TITLE - no API key required
         if (window.location.href.includes ("/watch")){
-            var titleMatch = document.title.match ("^(?:\([0-9]*\) )?(.*?)(?: - YouTube)$"); // ("(n) ") + "TITLE - YouTube"
+            var titleMatch = document.title.match (/^(?:\([0-9]+\) )?(.*?)(?: - YouTube)$/); // ("(n) ") + "TITLE - YouTube"
             var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
             if (pageTitle.length > 0 && pageTitle[0] !== undefined && titleMatch != null) {
-                if (pageTitle[0].innerText != titleMatch[2]){
-                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + titleMatch[2] + "'");
-                    pageTitle[0].innerText = titleMatch[2];
+                if (pageTitle[0].innerText != titleMatch[1]){
+                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + titleMatch[1] + "'");
+                    pageTitle[0].innerText = titleMatch[1];
                 }
             }
         }

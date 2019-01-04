@@ -80,12 +80,8 @@
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
             return a.id == 'video-title'
-            && a.className != "style-scope ytd-compact-radio-renderer"
-            && a.className != "style-scope ytd-compact-playlist-renderer"
-            && a.className != "style-scope ytd-grid-playlist-renderer"
-            && a.className != "style-scope ytd-grid-radio-renderer"
-            && a.className != "style-scope ytd-playlist-renderer"
-            && a.className != "style-scope ytd-radio-renderer"
+            && !a.className.includes("-radio-")
+            && !a.className.includes("-playlist-")
             && alreadyChanged.indexOf(a) == -1;
         } );
         links = links.concat(spans).slice(0,30);

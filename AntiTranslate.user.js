@@ -32,7 +32,6 @@
     var cachedTitles = {} // Dictionary(id, title): Cache of API fetches, survives only Youtube Autoplay
 
     var currentLocation; // String: Current page URL
-    var changedTitle; // Bool: Changed title
     var changedDescription; // Bool: Changed description
     var alreadyChanged; // List(string): Links already changed
 
@@ -48,28 +47,24 @@
 
     function resetChanged(){
         console.log(" --- Page Change detected! --- ");
-        currentLocation = window.location.href;
-        changedTitle = false;
+        currentLocation = document.title;
         changedDescription = false;
         alreadyChanged = [];
     }
     resetChanged();
 
     function changeTitles(){
-        if(currentLocation !== window.location.href) resetChanged();
+        if(currentLocation !== document.title) resetChanged();
 
         // MAIN TITLE - no API key required
-        if (!changedTitle && window.location.href.includes ("/watch")){
-            var videoTitle = document.title.endsWith(" - YouTube")? document.title : null;
+        if (window.location.href.includes ("/watch")){
+            var titleMatch = document.title.match ("^(?:\([0-9]*\) )?(.*?)(?: - YouTube)$"); // ("(n) ") + "TITLE - YouTube"
             var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
-            if (pageTitle.length > 0 && videoTitle != null && pageTitle[0] !== undefined) {
-                videoTitle = videoTitle.substring(0, videoTitle.length - " - YouTube".length); // Remove tailing " - YouTube"
-                videoTitle = videoTitle.replace("^(\([0-9]*\)) ", ""); // Remove notification count prefix, eg "(5) ";
-                if (pageTitle[0].innerText != videoTitle){
-                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + videoTitle + "'");
-                    pageTitle[0].innerText = videoTitle;
+            if (pageTitle.length > 0 && pageTitle[0] !== undefined && titleMatch != null) {
+                if (pageTitle[0].innerText != titleMatch[2]){
+                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + titleMatch[2] + "'");
+                    pageTitle[0].innerText = titleMatch[2];
                 }
-                changedTitle = true;
             }
         }
 

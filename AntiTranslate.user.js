@@ -21,7 +21,7 @@
         GM_setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key, then go to https://console.developers.google.com/apis/api/youtube.googleapis.com/ in order to enable Youtube Data API for your key."));
     }
     if(GM_getValue("api_key") === undefined || GM_getValue("api_key") === null || GM_getValue("api_key") === ""){
-    	NO_API_KEY = true; // Resets after page reload, still allows local title to be replaced
+        NO_API_KEY = true; // Resets after page reload, still allows local title to be replaced
     }
     const API_KEY = GM_getValue("api_key");
     var API_KEY_VALID = false;
@@ -29,28 +29,42 @@
 
     var url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + API_KEY;
 
-	var changedTitle;
-	var changedDescription;
-	var alreadyChanged;
-	var lastTitle;
-	function resetChanged(){
-        console.log("Changing page : resetting changed elements list");
-		changedTitle = false;
-		changedDescription = false;
-		alreadyChanged = [];
-		lastTitle = window.document.title;
-	}
-	resetChanged();
+    var cachedTitles = {} // Dictionary(id, title): Cache of API fetches, survives only Youtube Autoplay
 
+    var currentLocation; // String: Current page URL
+    var changedTitle; // Bool: Changed title
+    var changedDescription; // Bool: Changed description
+    var alreadyChanged; // List(string): Links already changed
+
+    function getVideoID(a)
+    {
+        while(a.tagName != "A"){
+            a = a.parentNode;
+        }
+        var href = a.href;
+        var tmp = href.split('v=')[1];
+        return tmp.split('&')[0];
+    }
+
+    function resetChanged(){
+        console.log(" --- Page Change detected! --- ");
+        currentLocation = window.location.href;
+        changedTitle = false;
+        changedDescription = false;
+        alreadyChanged = [];
+    }
+    resetChanged();
 
     function changeTitles(){
-		if(lastTitle !== window.document.title) resetChanged();
+        if(currentLocation !== window.location.href) resetChanged();
 
-        // MAIN TITLE
+        // MAIN TITLE - no API key required
         if (!changedTitle && window.location.href.includes ("/watch")){
-            var videoTitle = document.title.endsWith(" - YouTube")? document.title.substring(0, document.title.length - " - YouTube".length) : null;
+            var videoTitle = document.title.endsWith(" - YouTube")? document.title : null;
             var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
             if (pageTitle.length > 0 && videoTitle != null && pageTitle[0] !== undefined) {
+                videoTitle = videoTitle.substring(0, videoTitle.length - " - YouTube".length); // Remove tailing " - YouTube"
+                videoTitle = videoTitle.replace("^(\([0-9]*\)) ", ""); // Remove notification count prefix, eg "(5) ";
                 if (pageTitle[0].innerText != videoTitle){
                     console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + videoTitle + "'");
                     pageTitle[0].innerText = videoTitle;
@@ -65,42 +79,41 @@
 
         var APIcallIDs;
 
-        // REFERENCED VIDEO TITLES
+        // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
             return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
-            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
+            return a.id == 'video-title' && a.className != "style-scope ytd-compact-radio-renderer" && a.className != "style-scope ytd-compact-playlist-renderer" && alreadyChanged.indexOf(a) == -1;
         } );
         links = links.concat(spans).slice(0,30);
 
-         // MAIN VIDEO DESCRIPTION
+         // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
         if (!changedDescription && window.location.href.includes ("/watch")){
             mainVidID = window.location.href.split('v=')[1].split('&')[0];
         }
 
-        if(mainVidID != "" || links.length > 0){
+        if(mainVidID != "" || links.length > 0)
+        { // Initiate API request
 
             console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
-            //console.log(links.map(a => a.innerText));
 
-            var IDs = links.map( a => {
-                while(a.tagName != "A"){
-                    a = a.parentNode;
-                }
-                var href = a.href;
-                var tmp = href.split('v=')[1];
-                return tmp.split('&')[0];
-            } );
-            var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + IDs.join(','));
+            // Get all videoIDs to put in the API request
+            var IDs = links.map( a => getVideoID (a));
+            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
+            var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
 
+            // Issue API request
             var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4) {
+            xhr.onreadystatechange = function ()
+            {
+                if (xhr.readyState === 4)
+                { // Success
                     var data = JSON.parse(xhr.responseText);
 
-                    if(data.kind == "youtube#videoListResponse"){
+                    if(data.kind == "youtube#videoListResponse")
+                    {
                         API_KEY_VALID = true;
 
                         data = data.items;
@@ -110,8 +123,8 @@
                             var videoDescription = data[0].snippet.description;
                             var pageDescription = document.getElementsByClassName("content style-scope ytd-video-secondary-info-renderer");
                             if (pageDescription.length > 0 && videoDescription != null && pageDescription[0] !== undefined) {
-                                // TODO: linkify replaces links correctly for now, but without redirect or other specific youtube stuff.
-                                // Works, but need to verify it works since this replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
+                                // linkify replaces links correctly, but without redirect or other specific youtube stuff (no problem if missing)
+                                // Still critical, since it replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
                                 pageDescription[0].innerHTML = linkify(videoDescription);
                                 console.log ("Reverting main video description!");
                                 changedDescription = true;
@@ -119,30 +132,42 @@
                             else console.log ("Failed to find main video description!");
                         }
 
-                        var titleStore = {}
+                        // Create dictionary for all IDs and their original titles
                         data = data.forEach( v => {
-                            titleStore[v.id] = v.snippet.title;
+                            cachedTitles[v.id] = v.snippet.title;
                         } );
-                        //console.log("Original Titles (API):");
-                        //console.log(titleStore);
 
+                        // Change all previously found link elements
                         for(var i=0 ; i < links.length ; i++){
-                            var originalTitle = titleStore[IDs[i]];
-                            if(titleStore[IDs[i]] !== undefined && links[i].innerText != originalTitle.replace(/\s{2,}/g, ' ')){
-                                console.log ("'" + links[i].innerText + "' --> '" + originalTitle + "'");
-                                links[i].innerText = originalTitle;
+                            var curID = getVideoID(links[i]);
+                            if (curID !== IDs[i]) { // Can happen when Youtube was still loading when script was invoked
+                                console.log ("YouTube was too slow again...");
+                                changedDescription = false; // Might not have been loaded aswell - fixes rare errors
                             }
-                            alreadyChanged.push(links[i]);
+                            if (cachedTitles[curID] !== undefined)
+                            {
+                                var originalTitle = cachedTitles[curID];
+                                var pageTitle = links[i].innerText.trim();
+                                if(pageTitle != originalTitle.replace(/\s{2,}/g, ' '))
+                                {
+                                    console.log ("'" + pageTitle + "' --> '" + originalTitle + "'");
+                                    links[i].innerText = originalTitle;
+                                }
+                                alreadyChanged.push(links[i]);
+                            }
                         }
-                    } else {
+                    }
+                    else
+                    {
                         console.log("API Request Failed!");
                         console.log(requestUrl);
                         console.log(data);
+
                         // This ensures that occasional fails don't stall the script
                         // But if the first query is a fail then it won't try repeatedly
                         NO_API_KEY = !API_KEY_VALID;
                         if (NO_API_KEY) {
-							GM_setValue('api_key', '');
+                            GM_setValue('api_key', '');
                             console.log("API Key Fail! Please Reload!");
                         }
                     }

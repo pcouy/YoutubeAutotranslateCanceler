@@ -84,7 +84,7 @@
             return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
-            return a.id == 'video-title' && a.className != "style-scope ytd-compact-radio-renderer" && a.className != "style-scope ytd-compact-playlist-renderer" && alreadyChanged.indexOf(a) == -1;
+            return a.id == 'video-title' && a.className != "style-scope ytd-compact-radio-renderer" && a.className != "style-scope ytd-compact-playlist-renderer" && a.className != "style-scope ytd-grid-radio-renderer" && alreadyChanged.indexOf(a) == -1;
         } );
         links = links.concat(spans).slice(0,30);
 

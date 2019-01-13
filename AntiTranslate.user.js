@@ -79,12 +79,17 @@
             return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
-            return a.id == 'video-title'
-            && !a.className.includes("-radio-")
-            && !a.className.includes("-playlist-")
-            && alreadyChanged.indexOf(a) == -1;
+            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1 && a.className.includes("-video-");
         } );
         links = links.concat(spans).slice(0,30);
+        // Exclude list: Radio and Playlist Normal/Grid/Compact
+        // -- Radio/Mix Normal/Grid/Compact: ytd-radio-renderer -- ytd-grid-radio-renderer -- ytd-compact-radio-renderer
+        // -- Playlist Normal/Grid/Compact: ytd-playlist-renderer -- ytd-compact-playlist-renderer -- ytd-grid-playlist-renderer
+        // Include:
+        // -- Main Video Title: ytd-video-primary-info-renderer
+        // -- Playlist Video in Playlist: ytd-playlist-video-renderer
+        // -- Playlist Video while watch: ytd-playlist-panel-video-renderer
+        // >> Includes -video- only condition
 
          // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";

@@ -86,7 +86,7 @@
         // -- Radio/Mix Normal/Grid/Compact: ytd-radio-renderer -- ytd-grid-radio-renderer -- ytd-compact-radio-renderer
         // -- Playlist Normal/Grid/Compact: ytd-playlist-renderer -- ytd-compact-playlist-renderer -- ytd-grid-playlist-renderer
         // Include:
-        // -- Main Video Title: ytd-video-primary-info-renderer
+        // -- ytd-video-primary-info-renderer (Main) -- ytd-compact-video-renderer (Side) -- ytd-grid-video-renderer (Home/Channel)
         // -- Playlist Video in Playlist: ytd-playlist-video-renderer
         // -- Playlist Video while watch: ytd-playlist-panel-video-renderer
         // >> Includes -video- only condition

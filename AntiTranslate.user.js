@@ -40,9 +40,7 @@
         while(a.tagName != "A"){
             a = a.parentNode;
         }
-        var href = a.href;
-        var tmp = href.split('v=')[1];
-        return tmp.split('&')[0];
+        return a.href.match (/(?:v=)([a-zA-Z0-9-_]+)/)[1];
     }
 
     function resetChanged(){
@@ -75,13 +73,11 @@
         var APIcallIDs;
 
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
-        var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
-            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
+        var videoIDElements = Array.prototype.slice.call(document.querySelectorAll("#video-title")).filter(el => {
+            return el.className.includes("-video-") && alreadyChanged.indexOf(el) == -1;
         } );
-        var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
-            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1 && a.className.includes("-video-");
-        } );
-        links = links.concat(spans).slice(0,30);
+
+
         // Exclude list: Radio and Playlist Normal/Grid/Compact
         // -- Radio/Mix Normal/Grid/Compact: ytd-radio-renderer -- ytd-grid-radio-renderer -- ytd-compact-radio-renderer
         // -- Playlist Normal/Grid/Compact: ytd-playlist-renderer -- ytd-compact-playlist-renderer -- ytd-grid-playlist-renderer
@@ -97,15 +93,15 @@
             mainVidID = window.location.href.split('v=')[1].split('&')[0];
         }
 
-        if(mainVidID != "" || links.length > 0)
+        if(mainVidID != "" || videoIDElements.length > 0)
         { // Initiate API request
 
-            console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
-
             // Get all videoIDs to put in the API request
-            var IDs = links.map( a => getVideoID (a));
-            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
+            var IDs = videoIDElements.map( a => getVideoID (a));
+            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined).slice(0, 50);
             var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
+
+            console.log("Checking " + (mainVidID != ""? "main video and " : "") + APIFetchIDs.length + " video titles!");
 
             // Issue API request
             var xhr = new XMLHttpRequest();
@@ -141,8 +137,9 @@
                         } );
 
                         // Change all previously found link elements
-                        for(var i=0 ; i < links.length ; i++){
-                            var curID = getVideoID(links[i]);
+                        for(var i=0 ; i < videoIDElements.length ; i++){
+                            var vidElement = videoIDElements[i];
+                            var curID = getVideoID(vidElement);
                             if (curID !== IDs[i]) { // Can happen when Youtube was still loading when script was invoked
                                 console.log ("YouTube was too slow again...");
                                 changedDescription = false; // Might not have been loaded aswell - fixes rare errors
@@ -150,13 +147,19 @@
                             if (cachedTitles[curID] !== undefined)
                             {
                                 var originalTitle = cachedTitles[curID];
-                                var pageTitle = links[i].innerText.trim();
+                                var pageTitle = vidElement.innerText.trim();
                                 if(pageTitle != originalTitle.replace(/\s{2,}/g, ' '))
                                 {
                                     console.log ("'" + pageTitle + "' --> '" + originalTitle + "'");
-                                    links[i].innerText = originalTitle;
+                                    vidElement.innerText = originalTitle;
                                 }
-                                alreadyChanged.push(links[i]);
+                                alreadyChanged.push(vidElement);
+                            }
+                            else if (APIFetchIDs.includes(curID))
+                            { // Has been requested, but not been provided info about: Private or deleted video
+                                cachedTitles[curID] = vidElement.innerText.trim();
+                                alreadyChanged.push(vidElement);
+                                console.log ("Video with ID '" + curID + "' is either private or deleted!");
                             }
                         }
                     }

@@ -90,7 +90,7 @@
          // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
         if (!changedDescription && window.location.href.includes ("/watch")){
-            mainVidID = window.location.href.split('v=')[1].split('&')[0];
+            mainVidID = window.location.href.match (/(?:v=)([a-zA-Z0-9-_]+)/)[1];
         }
 
         if(mainVidID != "" || videoIDElements.length > 0)
@@ -186,7 +186,7 @@
     }
 
     function linkify(inputText) {
-        var replacedText, replacePattern1, replacePattern2, replacePattern3;
+        var replacedText, replacePattern1, replacePattern2, replacePattern3, replacePattern4;
 
         //URLs starting with http://, https://, or ftp://
         replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
@@ -200,6 +200,28 @@
         //Change email addresses to mailto:: links.
         replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
         replacedText = replacedText.replace(replacePattern3, '<a class="yt-simple-endpoint style-scope yt-formatted-string" spellcheck="false" href="mailto:$1">$1</a>');
+
+        //Change timestamps to clickable timestamp links.
+        // NOTE: NOT perfect, even with correct html code it will cause the page to reload whereas standard youtube timestamps will not. Probably some behind-the-scenes magic.
+        replacePattern4 = /([0-9]+:)?([0-9]+):([0-9]+)/gim;
+        replacedText = replacedText.replace(replacePattern4, function(match) {
+
+            // Prepare time by calculating total seconds
+            var timeChars = match.split(':'); // Split by hour:minute:seconds
+            var time = parseInt(timeChars[0], 10) * 60 + parseInt(timeChars[1], 10); // Only minutes:seconds
+            if (timeChars.length >= 3)
+            { // Full hours:minutes:seconds
+                time = time * 60 + parseInt(timeChars[2], 10);
+            }
+
+            // Prepare URL
+            var url = window.location.href; // Get current video URL
+            url = url.slice (url.indexOf("/watch?"), url.length); // Make it local
+            url = url.replace(/[?&]t=([0-9]+)s/, ""); // Remove existing timestamp
+            url = url + "&t=" + time + "s";
+
+            return '<a class="yt-simple-endpoint style-scope yt-formatted-string" spellcheck="false" href="' + url + '">' + match + '</a>';
+        });
 
         return replacedText;
     }

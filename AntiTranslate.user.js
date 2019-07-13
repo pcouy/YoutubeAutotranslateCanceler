@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
 // @namespace    https://github.com/pcouy/YoutubeAutotranslateCanceler/
-// @version      0.2
+// @version      0.1
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
@@ -40,7 +40,9 @@
         while(a.tagName != "A"){
             a = a.parentNode;
         }
-        return a.href.match (/(?:v=)([a-zA-Z0-9-_]+)/)[1];
+        var href = a.href;
+        var tmp = href.split('v=')[1];
+        return tmp.split('&')[0];
     }
 
     function resetChanged(){
@@ -73,35 +75,32 @@
         var APIcallIDs;
 
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
-        var videoIDElements = Array.prototype.slice.call(document.querySelectorAll("#video-title")).filter(el => {
-            return el.className.includes("-video-") && alreadyChanged.indexOf(el) == -1;
+        var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
+            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
         } );
-
-
-        // Exclude list: Radio and Playlist Normal/Grid/Compact
-        // -- Radio/Mix Normal/Grid/Compact: ytd-radio-renderer -- ytd-grid-radio-renderer -- ytd-compact-radio-renderer
-        // -- Playlist Normal/Grid/Compact: ytd-playlist-renderer -- ytd-compact-playlist-renderer -- ytd-grid-playlist-renderer
-        // Include:
-        // -- ytd-video-primary-info-renderer (Main) -- ytd-compact-video-renderer (Side) -- ytd-grid-video-renderer (Home/Channel)
-        // -- Playlist Video in Playlist: ytd-playlist-video-renderer
-        // -- Playlist Video while watch: ytd-playlist-panel-video-renderer
-        // >> Includes -video- only condition
+        var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
+            return a.id == 'video-title'
+            && !a.className.includes("-radio-")
+            && !a.className.includes("-playlist-")
+            && alreadyChanged.indexOf(a) == -1;
+        } );
+        links = links.concat(spans).slice(0,30);
 
          // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
         if (!changedDescription && window.location.href.includes ("/watch")){
-            mainVidID = window.location.href.match (/(?:v=)([a-zA-Z0-9-_]+)/)[1];
+            mainVidID = window.location.href.split('v=')[1].split('&')[0];
         }
 
-        if(mainVidID != "" || videoIDElements.length > 0)
+        if(mainVidID != "" || links.length > 0)
         { // Initiate API request
 
-            // Get all videoIDs to put in the API request
-            var IDs = videoIDElements.map( a => getVideoID (a));
-            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined).slice(0, 50);
-            var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
+            console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
 
-            console.log("Checking " + (mainVidID != ""? "main video and " : "") + APIFetchIDs.length + " video titles!");
+            // Get all videoIDs to put in the API request
+            var IDs = links.map( a => getVideoID (a));
+            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
+            var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
 
             // Issue API request
             var xhr = new XMLHttpRequest();
@@ -137,9 +136,8 @@
                         } );
 
                         // Change all previously found link elements
-                        for(var i=0 ; i < videoIDElements.length ; i++){
-                            var vidElement = videoIDElements[i];
-                            var curID = getVideoID(vidElement);
+                        for(var i=0 ; i < links.length ; i++){
+                            var curID = getVideoID(links[i]);
                             if (curID !== IDs[i]) { // Can happen when Youtube was still loading when script was invoked
                                 console.log ("YouTube was too slow again...");
                                 changedDescription = false; // Might not have been loaded aswell - fixes rare errors
@@ -147,19 +145,13 @@
                             if (cachedTitles[curID] !== undefined)
                             {
                                 var originalTitle = cachedTitles[curID];
-                                var pageTitle = vidElement.innerText.trim();
+                                var pageTitle = links[i].innerText.trim();
                                 if(pageTitle != originalTitle.replace(/\s{2,}/g, ' '))
                                 {
                                     console.log ("'" + pageTitle + "' --> '" + originalTitle + "'");
-                                    vidElement.innerText = originalTitle;
+                                    links[i].innerText = originalTitle;
                                 }
-                                alreadyChanged.push(vidElement);
-                            }
-                            else if (APIFetchIDs.includes(curID))
-                            { // Has been requested, but not been provided info about: Private or deleted video
-                                cachedTitles[curID] = vidElement.innerText.trim();
-                                alreadyChanged.push(vidElement);
-                                console.log ("Video with ID '" + curID + "' is either private or deleted!");
+                                alreadyChanged.push(links[i]);
                             }
                         }
                     }
@@ -186,7 +178,7 @@
     }
 
     function linkify(inputText) {
-        var replacedText, replacePattern1, replacePattern2, replacePattern3, replacePattern4;
+        var replacedText, replacePattern1, replacePattern2, replacePattern3;
 
         //URLs starting with http://, https://, or ftp://
         replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
@@ -200,28 +192,6 @@
         //Change email addresses to mailto:: links.
         replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
         replacedText = replacedText.replace(replacePattern3, '<a class="yt-simple-endpoint style-scope yt-formatted-string" spellcheck="false" href="mailto:$1">$1</a>');
-
-        //Change timestamps to clickable timestamp links.
-        // NOTE: NOT perfect, even with correct html code it will cause the page to reload whereas standard youtube timestamps will not. Probably some behind-the-scenes magic.
-        replacePattern4 = /([0-9]+:)?([0-9]+):([0-9]+)/gim;
-        replacedText = replacedText.replace(replacePattern4, function(match) {
-
-            // Prepare time by calculating total seconds
-            var timeChars = match.split(':'); // Split by hour:minute:seconds
-            var time = parseInt(timeChars[0], 10) * 60 + parseInt(timeChars[1], 10); // Only minutes:seconds
-            if (timeChars.length >= 3)
-            { // Full hours:minutes:seconds
-                time = time * 60 + parseInt(timeChars[2], 10);
-            }
-
-            // Prepare URL
-            var url = window.location.href; // Get current video URL
-            url = url.slice (url.indexOf("/watch?"), url.length); // Make it local
-            url = url.replace(/[?&]t=([0-9]+)s/, ""); // Remove existing timestamp
-            url = url + "&t=" + time + "s";
-
-            return '<a class="yt-simple-endpoint style-scope yt-formatted-string" spellcheck="false" href="' + url + '">' + match + '</a>';
-        });
 
         return replacedText;
     }

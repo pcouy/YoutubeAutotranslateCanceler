@@ -5,27 +5,31 @@
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
-// @grant        GM_setValue
-// @grant        GM_getValue
+// @grant        GM.setValue
+// @grant        GM.getValue
+// @grant        GM.deleteValue
 // ==/UserScript==
 
-
-(function() {
+(async () => {
     'use strict';
 
     /*
     Get a YouTube Data v3 API key from https://console.developers.google.com/apis/library/youtube.googleapis.com?q=YoutubeData
     */
     var NO_API_KEY = false;
-    if(GM_getValue("api_key") === undefined || GM_getValue("api_key") === null || GM_getValue("api_key") === ""){
-        GM_setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key, then go to https://console.developers.google.com/apis/api/youtube.googleapis.com/ in order to enable Youtube Data API for your key."));
+    var api_key_awaited = await GM.getValue("api_key");
+    if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
+        await GM.setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key, then go to https://console.developers.google.com/apis/api/youtube.googleapis.com/ in order to enable Youtube Data API for your key."));
     }
-    if(GM_getValue("api_key") === undefined || GM_getValue("api_key") === null || GM_getValue("api_key") === ""){
+  
+    var api_key_awaited = await GM.getValue("api_key");
+    if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
         NO_API_KEY = true; // Resets after page reload, still allows local title to be replaced
+        console.log("NO API KEY PRESENT");
     }
-    const API_KEY = GM_getValue("api_key");
+    const API_KEY = await GM.getValue("api_key");
     var API_KEY_VALID = false;
-
+		console.log(API_KEY);
 
     var url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + API_KEY;
 

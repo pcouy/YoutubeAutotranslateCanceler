@@ -182,7 +182,7 @@
     }
 
     function linkify(inputText) {
-        var replacedText, replacePattern1, replacePattern2, replacePattern3;
+        var replacedText, replaceTimestampUrl, replacePattern1, replacePattern2, replacePattern3, replacePattern4;
 
         //URLs starting with http://, https://, or ftp://
         replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
@@ -197,8 +197,25 @@
         replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
         replacedText = replacedText.replace(replacePattern3, '<a class="yt-simple-endpoint style-scope yt-formatted-string" spellcheck="false" href="mailto:$1">$1</a>');
 
+        //Linkify video time stamps
+        replacePattern4 = /(^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$)/gim;
+        replaceTimestampUrl = window.location.pathname + '&amp;t=' + hmsToSeconds(replacedText.match(replacePattern4)) + 's';
+        replacedText = replacedText.replace(replacePattern4, '<a class="yt-simple-endpoint style-scope yt-formatted-string" spellcheck="false" href="' + replaceTimestampUrl + '" dir="auto">$&</a>')
+
         return replacedText;
     }
+
+    function hmsToSeconds(stamp) {
+        var parts = stamp.split(':'), seconds = 0, multiplier = 1;
+
+        while (parts.length > 0) {
+            seconds += multiplier * parseInt(parts.pop(), 10);
+            multiplier *= 60;
+        }
+
+        return seconds;
+    }
+
 
     // Execute every seconds in case new content has been added to the page
     // DOM listener would be good if it was not for the fact that Youtube changes its DOM frequently

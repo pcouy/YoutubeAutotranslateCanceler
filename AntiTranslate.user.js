@@ -82,13 +82,16 @@
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
             return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
         } );
+      	var home = Array.prototype.slice.call(document.getElementsByTagName("yt-formatted-string")).filter( a => {
+            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
+        } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
             return a.id == 'video-title'
             && !a.className.includes("-radio-")
             && !a.className.includes("-playlist-")
             && alreadyChanged.indexOf(a) == -1;
         } );
-        links = links.concat(spans).slice(0,30);
+        links = links.concat(home, spans).slice(0,30);
 
          // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";

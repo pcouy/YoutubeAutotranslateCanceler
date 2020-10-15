@@ -80,7 +80,10 @@
 
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
-            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
+            return a.id == 'video-title'
+            && !a.className.includes("-radio-")
+            && !a.className.includes("-playlist-")
+            && alreadyChanged.indexOf(a) == -1;
         } );
       	var home = Array.prototype.slice.call(document.getElementsByTagName("yt-formatted-string")).filter( a => {
             return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;

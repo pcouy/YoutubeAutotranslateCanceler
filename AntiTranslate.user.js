@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
 // @namespace    https://github.com/pcouy/YoutubeAutotranslateCanceler/
-// @version      0.4
+// @downloadURL  https://github.com/pcouy/YoutubeAutotranslateCanceler/raw/master/AntiTranslate.user.js
+// @version      0.5
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
@@ -80,6 +81,12 @@
 
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
+            return a.id == 'video-title'
+            && !a.className.includes("-radio-")
+            && !a.className.includes("-playlist-")
+            && alreadyChanged.indexOf(a) == -1;
+        } );
+      	var home = Array.prototype.slice.call(document.getElementsByTagName("yt-formatted-string")).filter( a => {
             return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
@@ -88,7 +95,7 @@
             && !a.className.includes("-playlist-")
             && alreadyChanged.indexOf(a) == -1;
         } );
-        links = links.concat(spans).slice(0,30);
+        links = links.concat(home, spans).slice(0,30);
 
          // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";

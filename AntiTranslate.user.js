@@ -50,6 +50,13 @@
         return tmp.split('&')[0];
     }
 
+    function getTitleNode(b){
+    	while(b.title == ""){
+    		b = b.parentNode;
+    	}
+    	return b;
+    }
+
     function resetChanged(){
         console.log(" --- Page Change detected! --- ");
         currentLocation = document.title;
@@ -161,6 +168,7 @@
                                 {
                                     console.log ("'" + pageTitle + "' --> '" + originalTitle + "'");
                                     links[i].innerText = originalTitle;
+                                	getTitleNode(links[i]).title = originalTitle;
                                 }
                                 alreadyChanged.push(links[i]);
                             }

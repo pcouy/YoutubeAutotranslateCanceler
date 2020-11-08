@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
-// @namespace    https://github.com/pcouy/YoutubeAutotranslateCanceler/
-// @downloadURL  https://github.com/pcouy/YoutubeAutotranslateCanceler/raw/master/AntiTranslate.user.js
-// @version      0.5
+// @namespace    https://github.com/Bertaz/YoutubeAutotranslateCanceler/
+// @downloadURL  https://github.com/Bertaz/YoutubeAutotranslateCanceler/raw/master/AntiTranslate.user.js
+// @version      0.6
 // @description  Remove auto-translated youtube titles
+// @author       Bertaz
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
 // @grant        GM.setValue

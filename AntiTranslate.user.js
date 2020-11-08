@@ -13,6 +13,9 @@
 
 (async () => {
     'use strict';
+    //SETTINGS////////////
+    const fixPopup = true	//untranslates the popups appearing when hovering with the mouse over the title (default true)
+    /////////////////////
 
     /*
     Get a YouTube Data v3 API key from https://console.developers.google.com/apis/library/youtube.googleapis.com?q=YoutubeData
@@ -22,8 +25,8 @@
     if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
         await GM.setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key, then go to https://console.developers.google.com/apis/api/youtube.googleapis.com/ in order to enable Youtube Data API for your key."));
     }
-  
-    var api_key_awaited = await GM.getValue("api_key");
+
+    api_key_awaited = await GM.getValue("api_key");
     if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
         NO_API_KEY = true; // Resets after page reload, still allows local title to be replaced
         console.log("NO API KEY PRESENT");
@@ -88,7 +91,7 @@
 
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
-            return a.id == 'video-title'
+            return a.id == 'video-title' || a.parentNode.id == 'title'
             && !a.className.includes("-radio-")
             && !a.className.includes("-playlist-")
             && alreadyChanged.indexOf(a) == -1;
@@ -168,7 +171,9 @@
                                 {
                                     console.log ("'" + pageTitle + "' --> '" + originalTitle + "'");
                                     links[i].innerText = originalTitle;
-                                	getTitleNode(links[i]).title = originalTitle;
+                                    if (fixPopup){
+	                                	getTitleNode(links[i]).title = originalTitle;
+                                    }
                                 }
                                 alreadyChanged.push(links[i]);
                             }

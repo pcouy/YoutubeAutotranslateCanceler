@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
-// @namespace    https://github.com/Bertaz/YoutubeAutotranslateCanceler/
+// @namespace    https://github.com/Bertaz/YoutubeAutotranslateCanceler
 // @downloadURL  https://github.com/Bertaz/YoutubeAutotranslateCanceler/raw/master/AntiTranslate.user.js
 // @version      0.6
 // @description  Remove auto-translated youtube titles

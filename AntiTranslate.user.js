@@ -45,8 +45,7 @@
             a = a.parentNode;
         }
         var href = a.href;
-        var tmp = href.split('v=')[1];
-        return tmp.split('&')[0];
+        return href.split('v=')[1]?.split('&')[0] ?? href.split("/shorts/")[1];
     }
 
     function resetChanged(){
@@ -102,8 +101,19 @@
             console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
 
             // Get all videoIDs to put in the API request
-            var IDs = links.map( a => getVideoID (a));
-            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
+            var IDs = [];
+            for(let link of links)
+            {
+                let id = getVideoID(link);
+                if(id)
+                {
+                    IDs.push(id);
+                }
+                else
+                {
+                    alreadyChanged.push(link);
+                }
+            }            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
             var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
 
             // Issue API request

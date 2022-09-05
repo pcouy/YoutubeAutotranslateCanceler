@@ -113,7 +113,8 @@
                 {
                     alreadyChanged.push(link);
                 }
-            }            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
+            }            
+            var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
             var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
 
             // Issue API request

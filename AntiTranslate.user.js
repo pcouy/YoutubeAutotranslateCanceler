@@ -38,6 +38,8 @@
     var currentLocation; // String: Current page URL
     var changedDescription; // Bool: Changed description
     var alreadyChanged; // List(string): Links already changed
+    var previewChanged;
+
 
     function getVideoID(a)
     {
@@ -89,6 +91,15 @@
             && alreadyChanged.indexOf(a) == -1;
         } );
         links = links.concat(spans).slice(0,30);
+        var preview = document.querySelector("#preview #details:not([hidden]) yt-formatted-string.ytd-video-preview");
+        if(!preview)
+        {
+            previewChanged = false;
+        }
+        else if(previewChanged)
+        {
+            preview = undefined;
+        }
 
          // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
@@ -96,13 +107,27 @@
             mainVidID = window.location.href.split('v=')[1].split('&')[0];
         }
 
-        if(mainVidID != "" || links.length > 0)
+        if(mainVidID != "" || links.length > 0 || preview)
         { // Initiate API request
 
-            console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
-
+            if(mainVidID || links.length > 0)
+            {
+                console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
+            }
+            if(preview)
+            {
+                console.log("Checking preview");
+            }
             // Get all videoIDs to put in the API request
             var IDs = links.map( a => getVideoID (a));
+            if(preview)
+            {
+                const id = getVideoID(preview);
+                if(id)
+                {
+                    IDs.push(id);
+                }
+            }
             var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
             var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
 
@@ -156,6 +181,22 @@
                                     links[i].innerText = originalTitle;
                                 }
                                 alreadyChanged.push(links[i]);
+                            }
+                        }
+
+                        if(preview)
+                        {
+                            const id = getVideoID(preview);
+                            const originalTitle = cachedTitles[id];
+                            if(originalTitle)
+                            {
+                                const previewTitle = preview.innerText.trim();
+                                if(previewTitle != originalTitle.replace(/\s{2,}/g, ' '))
+                                {
+                                    console.log ("'" + previewTitle + "' --> '" + originalTitle + "'");
+                                    preview.innerText = originalTitle;
+                                    previewChanged = true;
+                                }
                             }
                         }
                     }

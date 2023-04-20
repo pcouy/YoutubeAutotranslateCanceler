@@ -38,6 +38,8 @@
     var currentLocation; // String: Current page URL
     var changedDescription; // Bool: Changed description
     var alreadyChanged; // List(string): Links already changed
+    var previewChanged;
+
 
     function getVideoID(a)
     {
@@ -45,8 +47,7 @@
             a = a.parentNode;
         }
         var href = a.href;
-        var tmp = href.split('v=')[1];
-        return tmp.split('&')[0];
+        return href.split('v=')[1]?.split('&')[0] ?? href.split("/shorts/")[1];
     }
 
     function resetChanged(){
@@ -61,6 +62,8 @@
         if(currentLocation !== document.title) resetChanged();
 
         // MAIN TITLE - no API key required
+        //No longer work
+        /*
         if (window.location.href.includes ("/watch")){
             var titleMatch = document.title.match (/^(?:\([0-9]+\) )?(.*?)(?: - YouTube)$/); // ("(n) ") + "TITLE - YouTube"
             var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
@@ -71,6 +74,7 @@
                 }
             }
         }
+        */
 
         if (NO_API_KEY) {
             return;
@@ -89,6 +93,15 @@
             && alreadyChanged.indexOf(a) == -1;
         } );
         links = links.concat(spans).slice(0,30);
+        var preview = document.querySelector("#preview #details:not([hidden]) yt-formatted-string.ytd-video-preview");
+        if(!preview)
+        {
+            previewChanged = false;
+        }
+        else if(previewChanged)
+        {
+            preview = undefined;
+        }
 
          // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
@@ -96,13 +109,31 @@
             mainVidID = window.location.href.split('v=')[1].split('&')[0];
         }
 
-        if(mainVidID != "" || links.length > 0)
+        if(mainVidID != "" || links.length > 0 || preview)
         { // Initiate API request
 
-            console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
-
+            if(mainVidID || links.length > 0)
+            {
+                console.log("Checking " + (mainVidID != ""? "main video and " : "") + links.length + " video titles!");
+            }
+            if(preview)
+            {
+                console.log("Checking preview");
+            }
             // Get all videoIDs to put in the API request
-            var IDs = links.map( a => getVideoID (a));
+            var IDs = [];
+            for(let link of links)
+            {
+                let id = getVideoID(link);
+                if(id)
+                {
+                    IDs.push(id);
+                }
+                else
+                {
+                    alreadyChanged.push(link);
+                }
+            }            
             var APIFetchIDs = IDs.filter(id => cachedTitles[id] === undefined);
             var requestUrl = url_template.replace("{IDs}", (mainVidID != ""? (mainVidID + ",") : "") + APIFetchIDs.join(','));
 
@@ -124,14 +155,24 @@
                         { // Replace Main Video Description
                             var videoDescription = data[0].snippet.description;
                             var pageDescription = document.getElementsByClassName("content style-scope ytd-video-secondary-info-renderer");
-                            if (pageDescription.length > 0 && videoDescription != null && pageDescription[0] !== undefined) {
+                            if (pageDescription.length > 0 && videoDescription != null) {
                                 // linkify replaces links correctly, but without redirect or other specific youtube stuff (no problem if missing)
                                 // Still critical, since it replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
-                                pageDescription[0].innerHTML = linkify(videoDescription);
-                                console.log ("Reverting main video description!");
-                                changedDescription = true;
+                                for(let pd of pageDescription)
+                                {
+                                    pd.innerHTML = linkify(videoDescription);
+                                    console.log ("Reverting main video description!");
+                                    changedDescription = true;
+                                }
                             }
                             else console.log ("Failed to find main video description!");
+
+                            const mainTitle = document.querySelector("ytd-watch-flexy:not([hidden]) #container > h1 > yt-formatted-string");
+                            if(mainTitle)
+                            {
+                                console.log ("Reverting main video title '" + mainTitle.innerHTML + "' to '" + data[0].snippet.title + "'");
+                                mainTitle.innerHTML = data[0].snippet.title;
+                            }
                         }
 
                         // Create dictionary for all IDs and their original titles
@@ -156,6 +197,22 @@
                                     links[i].innerText = originalTitle;
                                 }
                                 alreadyChanged.push(links[i]);
+                            }
+                        }
+
+                        if(preview)
+                        {
+                            const id = getVideoID(preview);
+                            const originalTitle = cachedTitles[id];
+                            if(originalTitle)
+                            {
+                                const previewTitle = preview.innerText.trim();
+                                if(previewTitle != originalTitle.replace(/\s{2,}/g, ' '))
+                                {
+                                    console.log ("'" + previewTitle + "' --> '" + originalTitle + "'");
+                                    preview.innerText = originalTitle;
+                                    previewChanged = true;
+                                }
                             }
                         }
                     }

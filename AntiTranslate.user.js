@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
 // @namespace    https://github.com/pcouy/YoutubeAutotranslateCanceler/
-// @version      0.4
+// @version      0.69
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
@@ -21,7 +21,7 @@
     if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
         await GM.setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key, then go to https://console.developers.google.com/apis/api/youtube.googleapis.com/ in order to enable Youtube Data API for your key."));
     }
-  
+
     var api_key_awaited = await GM.getValue("api_key");
     if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
         NO_API_KEY = true; // Resets after page reload, still allows local title to be replaced
@@ -33,6 +33,7 @@
 
     var url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + API_KEY;
 
+    // Caches can grow big with long tab sessions. Not sure the real impact but refreshing a YT tab from time to time might help.
     var cachedTitles = {} // Dictionary(id, title): Cache of API fetches, survives only Youtube Autoplay
 
     var currentLocation; // String: Current page URL
@@ -45,7 +46,11 @@
             a = a.parentNode;
         }
         var href = a.href;
-        var tmp = href.split('v=')[1];
+        if (href.includes("short")) {
+            var tmp = href.split('/')[4];
+        } else {
+            var tmp = href.split('v=')[1];
+        }
         return tmp.split('&')[0];
     }
 
@@ -60,18 +65,6 @@
     function changeTitles(){
         if(currentLocation !== document.title) resetChanged();
 
-        // MAIN TITLE - no API key required
-        if (window.location.href.includes ("/watch")){
-            var titleMatch = document.title.match (/^(?:\([0-9]+\) )?(.*?)(?: - YouTube)$/); // ("(n) ") + "TITLE - YouTube"
-            var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
-            if (pageTitle.length > 0 && pageTitle[0] !== undefined && titleMatch != null) {
-                if (pageTitle[0].innerText != titleMatch[1]){
-                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + titleMatch[1] + "'");
-                    pageTitle[0].innerText = titleMatch[1];
-                }
-            }
-        }
-
         if (NO_API_KEY) {
             return;
         }
@@ -80,7 +73,9 @@
 
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
-            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
+            return a.id == 'video-title-link'
+            && !a.classList.contains("ytd-video-preview")
+            && alreadyChanged.indexOf(a) == -1;
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
             return a.id == 'video-title'
@@ -124,10 +119,14 @@
                         { // Replace Main Video Description
                             var videoDescription = data[0].snippet.description;
                             var pageDescription = document.getElementsByClassName("content style-scope ytd-video-secondary-info-renderer");
+                            var pageTitle = document.querySelector("h1.style-scope > yt-formatted-string");
                             if (pageDescription.length > 0 && videoDescription != null && pageDescription[0] !== undefined) {
                                 // linkify replaces links correctly, but without redirect or other specific youtube stuff (no problem if missing)
                                 // Still critical, since it replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
                                 pageDescription[0].innerHTML = linkify(videoDescription);
+                                console.log ("Reverting main video title '" + pageTitle.innerText + "' to '" + data[0].snippet.title + "'");
+                                pageTitle.innerText = data[0].snippet.title;
+                                document.title = data[0].snippet.title + " - Youtube";
                                 console.log ("Reverting main video description!");
                                 changedDescription = true;
                             }
@@ -153,7 +152,11 @@
                                 if(pageTitle != originalTitle.replace(/\s{2,}/g, ' '))
                                 {
                                     console.log ("'" + pageTitle + "' --> '" + originalTitle + "'");
-                                    links[i].innerText = originalTitle;
+                                    if (links[i].tagName == "SPAN") {
+                                        links[i].innerText = originalTitle;
+                                    } else {
+                                        links[i].querySelector("yt-formatted-string").innerText = originalTitle;
+                                    }
                                 }
                                 alreadyChanged.push(links[i]);
                             }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
 // @namespace    https://github.com/pcouy/YoutubeAutotranslateCanceler/
-// @version      0.69
+// @version      0.4
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
@@ -126,7 +126,10 @@
                                 pageDescription[0].innerHTML = linkify(videoDescription);
                                 console.log ("Reverting main video title '" + pageTitle.innerText + "' to '" + data[0].snippet.title + "'");
                                 pageTitle.innerText = data[0].snippet.title;
+                                // Just force a title update, screw youtube's title refresh logic
+                                pageTitle.removeAttribute("is-empty");
                                 document.title = data[0].snippet.title + " - Youtube";
+                                currentLocation = document.title;
                                 console.log ("Reverting main video description!");
                                 changedDescription = true;
                             }

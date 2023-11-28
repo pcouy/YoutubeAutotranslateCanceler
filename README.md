@@ -72,3 +72,8 @@ Don't click "create" yet (if you did, just click the pencil icon next to your ne
  You should be redirected to your credentials manager, from where you can copy your API key (step 10) in order to paste it when the script prompts you for it.
 
 ![Step 10](https://github.com/pcouy/YoutubeAutotranslateCanceler/raw/master/howto_screenshots/step10.png)
+
+
+# Notes exclusive to my fork
+
+* If console logs say something about failing to parse URLs that look like google ads URLs, or if you see the code trying to do that while debugging, add this filter to uBlock: `www.youtube.com##a[href*="https://www.googleadservices.com`

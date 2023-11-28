@@ -76,4 +76,4 @@ Don't click "create" yet (if you did, just click the pencil icon next to your ne
 
 # Notes exclusive to my fork
 
-* If console logs say something about failing to parse URLs that look like google ads URLs, or if you see the code trying to do that while debugging, add this filter to uBlock: `www.youtube.com##a[href*="https://www.googleadservices.com`
+* If console logs say something about failing to parse URLs that look like google ads URLs, or if you see the code trying to do that while debugging, add this filter to uBlock: `www.youtube.com##a[href*="https://www.googleadservices.com"]`

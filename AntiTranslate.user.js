@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
-// @namespace    https://github.com/pcouy/YoutubeAutotranslateCanceler/
+// @namespace    https://github.com/kokonguyen191/YoutubeAutotranslateCanceler
 // @version      0.69
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
@@ -9,6 +9,12 @@
 // @grant        GM.getValue
 // @grant        GM.deleteValue
 // ==/UserScript==
+
+// Configurations
+// How many milliseconds between each check. Higher value means more stress on browser.
+const MAIN_POLLING_INTERVAL = 1000;
+// How many milliseconds between each check if description has been changed or not by method of clicking the "show more" or "show less" button. Lightweight, can set to a low value.
+const DESCRIPTION_POLLING_INTERVAL = 200;
 
 (async () => {
     'use strict';
@@ -90,10 +96,6 @@
         if (!changedDescription && window.location.href.includes("/watch")) {
             mainVidID = window.location.href.split('v=')[1].split('&')[0];
             cachedDescription = "";
-        }
-
-        if (changedDescription) {
-            replaceVideoDescCached();
         }
 
         if (mainVidID != "" || links.length > 0) { // Initiate API request
@@ -211,7 +213,11 @@
 
     // Youtube fucked the description layout up by force reloading it when you click on the "show more" or "show less" button
     // So this is the workaround. Ideally injecting directly the object that contains the decsription or modifying the behavior of these buttons is better.
+    // Run separately from changeTitles() to be more responsive. Hopefully won't cause race condition. Shouldn't, but might.
     function replaceVideoDescCached() {
+        if (!changedDescription) {
+            return;
+        }
         var pageDescription = document.querySelector("yt-attributed-string > span");
         if (pageDescription != null && pageDescription.attributes["changed"] == undefined) {
             pageDescription.innerHTML = cachedDescription;
@@ -220,5 +226,6 @@
 
     // Execute every seconds in case new content has been added to the page
     // DOM listener would be good if it was not for the fact that Youtube changes its DOM frequently
-    setInterval(changeTitles, 1000);
+    setInterval(changeTitles, MAIN_POLLING_INTERVAL);
+    setInterval(replaceVideoDescCached, DESCRIPTION_POLLING_INTERVAL);
 })();

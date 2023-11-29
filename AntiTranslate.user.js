@@ -39,6 +39,7 @@
     var currentLocation; // String: Current page URL
     var changedDescription; // Bool: Changed description
     var alreadyChanged; // List(string): Links already changed
+    var cachedDescription; // String: Cached description to use for updating desc when it's been changed once
 
     function getVideoID(a) {
         while (a.tagName != "A") {
@@ -88,6 +89,11 @@
         var mainVidID = "";
         if (!changedDescription && window.location.href.includes("/watch")) {
             mainVidID = window.location.href.split('v=')[1].split('&')[0];
+            cachedDescription = "";
+        }
+
+        if (changedDescription) {
+            replaceVideoDescCached();
         }
 
         if (mainVidID != "" || links.length > 0) { // Initiate API request
@@ -187,7 +193,9 @@
         if (pageDescription != null && videoDescription != null) {
             // linkify replaces links correctly, but without redirect or other specific youtube stuff (no problem if missing)
             // Still critical, since it replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
-            pageDescription.innerHTML = linkify(videoDescription);
+            cachedDescription = linkify(videoDescription);
+            pageDescription.innerHTML = cachedDescription;
+            pageDescription.attributes["changed"] = true;
             console.log("Reverting main video title '" + pageTitle.innerText + "' to '" + data[0].snippet.title + "'");
             pageTitle.innerText = data[0].snippet.title;
             // Just force a title update, screw youtube's title refresh logic
@@ -198,6 +206,15 @@
             changedDescription = true;
         } else {
             console.log("Failed to find main video description!");
+        }
+    }
+
+    // Youtube fucked the description layout up by force reloading it when you click on the "show more" or "show less" button
+    // So this is the workaround. Ideally injecting directly the object that contains the decsription or modifying the behavior of these buttons is better.
+    function replaceVideoDescCached() {
+        var pageDescription = document.querySelector("yt-attributed-string > span");
+        if (pageDescription != null && pageDescription.attributes["changed"] == undefined) {
+            pageDescription.innerHTML = cachedDescription;
         }
     }
 

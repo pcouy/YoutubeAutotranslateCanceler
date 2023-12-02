@@ -220,6 +220,7 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
         }
         var pageDescription = document.querySelector("yt-attributed-string > span");
         if (pageDescription != null && pageDescription.attributes["changed"] == undefined) {
+            pageDescription.attributes["changed"] = true;
             pageDescription.innerHTML = cachedDescription;
         }
     }

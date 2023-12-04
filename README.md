@@ -1,6 +1,8 @@
-:warning: According to the [most recent user feedback on GreasyFork](https://greasyfork.org/en/scripts/374453-youtube-auto-translate-canceler/feedback), the script in this appears to no longer work. Since I no longer get auto-translated titles in my YouTube, I am not able to try and fix it or test pull requests. If you want to maintain a fork of this project, let me know so I can link to your repo here before archiving this one. :warning:
+# Notes exclusive to my fork
 
-You can review [forks of this repo](https://github.com/pcouy/YoutubeAutotranslateCanceler/network) in hope that one of them still works (I would check [the most recently updated fork](https://github.com/overlimit/YoutubeAutotranslateCanceler) first)
+* You can expect this to be updated, but only if I got impacted by any changes. Can't fix what I can't see after all.
+* If console logs say something about failing to parse URLs that look like google ads URLs, or if you see the code trying to do that while debugging, add this filter to uBlock: `www.youtube.com##a[href*="https://www.googleadservices.com"]`
+* There are some issues where video titles got mixed up but fixing that means I need to fully read the source code. Might get to it one day, but not in the near future.
 
 # YoutubeAutotranslateCanceler
 
@@ -72,8 +74,3 @@ Don't click "create" yet (if you did, just click the pencil icon next to your ne
  You should be redirected to your credentials manager, from where you can copy your API key (step 10) in order to paste it when the script prompts you for it.
 
 ![Step 10](https://github.com/pcouy/YoutubeAutotranslateCanceler/raw/master/howto_screenshots/step10.png)
-
-
-# Notes exclusive to my fork
-
-* If console logs say something about failing to parse URLs that look like google ads URLs, or if you see the code trying to do that while debugging, add this filter to uBlock: `www.youtube.com##a[href*="https://www.googleadservices.com"]`

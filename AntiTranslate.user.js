@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
 // @namespace    https://github.com/kokonguyen191/YoutubeAutotranslateCanceler
-// @version      0.69
+// @version      0.69.1
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
@@ -46,6 +46,7 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
     var changedDescription; // Bool: Changed description
     var alreadyChanged; // List(string): Links already changed
     var cachedDescription; // String: Cached description to use for updating desc when it's been changed once
+    var cachedTitle; // String: Cached title to revert changes done by YT after title has already been updated
 
     function getVideoID(a) {
         while (a.tagName != "A") {
@@ -167,6 +168,16 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
             xhr.send();
 
         }
+
+        if (mainVidID == "" && changedDescription) {
+            var pageTitle = document.querySelector("h1.style-scope > yt-formatted-string");
+            if (pageTitle.attributes["is-empty"] != undefined) {
+                pageTitle.removeAttribute("is-empty");
+            }
+            if (pageTitle.innerText.length != cachedTitle.length) {
+                pageTitle.innerText = cachedTitle;
+            }
+        }
     }
 
     function linkify(inputText) {
@@ -200,6 +211,7 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
             pageDescription.attributes["changed"] = true;
             console.log("Reverting main video title '" + pageTitle.innerText + "' to '" + data[0].snippet.title + "'");
             pageTitle.innerText = data[0].snippet.title;
+            cachedTitle = data[0].snippet.title;
             // Just force a title update, screw youtube's title refresh logic
             pageTitle.removeAttribute("is-empty");
             document.title = data[0].snippet.title + " - Youtube";

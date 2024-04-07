@@ -82,12 +82,12 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter(a => {
             return a.id == 'video-title-link' &&
                 !a.classList.contains("ytd-video-preview") &&
+                !a.href.includes("list=") &&
                 alreadyChanged.indexOf(a) == -1;
         });
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter(a => {
             return a.id == 'video-title' &&
-                !a.className.includes("-radio-") &&
-                !a.className.includes("-playlist-") &&
+                !a.parentNode.href.includes("list=") &&
                 alreadyChanged.indexOf(a) == -1;
         });
         links = links.concat(spans).slice(0, 30);

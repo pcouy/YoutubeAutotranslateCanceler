@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
 // @namespace    https://github.com/adriaan1313/YoutubeAutotranslateCanceler
-// @version      0.69.2
+// @version      0.69.3
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
@@ -18,6 +18,14 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
 
 (async () => {
     'use strict';
+	var useTrusted = false;
+    //i am confused, but this might help?
+    if (window.trustedTypes && window.trustedTypes.createPolicy) {
+        window.trustedTypes.createPolicy('default', {
+            createHTML: (string, sink) => string
+        });
+        useTrusted = true;
+    }
 
     /*
     Get a YouTube Data v3 API key from https://console.developers.google.com/apis/library/youtube.googleapis.com?q=YoutubeData
@@ -28,7 +36,7 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
         await GM.setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key, then go to https://console.developers.google.com/apis/api/youtube.googleapis.com/ in order to enable Youtube Data API for your key."));
     }
 
-    var api_key_awaited = await GM.getValue("api_key");
+    api_key_awaited = await GM.getValue("api_key");
     if (api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === "") {
         NO_API_KEY = true; // Resets after page reload, still allows local title to be replaced
         console.log("NO API KEY PRESENT");
@@ -209,7 +217,11 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
             // linkify replaces links correctly, but without redirect or other specific youtube stuff (no problem if missing)
             // Still critical, since it replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
             cachedDescription = linkify(videoDescription);
-            pageDescription.innerHTML = cachedDescription;
+            if(useTrusted){
+                pageDescription.innerHTML = window.trustedTypes.defaultPolicy.createHTML(cachedDescription);
+            } else {
+                pageDescription.innerHTML = cachedDescription;
+            }
             pageDescription.attributes["changed"] = true;
             console.log("Reverting main video title '" + pageTitle.innerText + "' to '" + data[0].snippet.title + "'");
             pageTitle.innerText = data[0].snippet.title;
@@ -235,7 +247,11 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
         var pageDescription = document.querySelector("yt-attributed-string > span");
         if (pageDescription != null && pageDescription.attributes["changed"] == undefined) {
             pageDescription.attributes["changed"] = true;
-            pageDescription.innerHTML = cachedDescription;
+            if(useTrusted){
+                pageDescription.innerHTML = window.trustedTypes.defaultPolicy.createHTML(cachedDescription);
+            } else {
+                pageDescription.innerHTML = cachedDescription;
+            }
         }
     }
 

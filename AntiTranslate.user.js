@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Auto-translate Canceler
 // @namespace    https://github.com/adriaan1313/YoutubeAutotranslateCanceler
-// @version      0.69.3
+// @version      0.69.4
 // @description  Remove auto-translated youtube titles
 // @author       Pierre Couy
 // @match        https://www.youtube.com/*
@@ -55,6 +55,7 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
     var alreadyChanged; // List(string): Links already changed
     var cachedDescription; // String: Cached description to use for updating desc when it's been changed once
     var cachedTitle; // String: Cached title to revert changes done by YT after title has already been updated
+    var noDescription; // Bool: For when the video doesn't even have a description
 
     function getVideoID(a) {
         while (a.tagName != "A") {
@@ -73,6 +74,7 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
         console.log(" --- Page Change detected! --- ");
         currentLocation = document.title;
         changedDescription = false;
+        noDescription = false;
         alreadyChanged = [];
     }
     resetChanged();
@@ -210,7 +212,16 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
     }
 
     function replaceVideoDesc(data) {
-        var pageDescription = document.querySelector("yt-attributed-string > span");
+        var pageDescription = document.querySelector("#snippet yt-attributed-string > span");
+        if(pageDescription == null){
+            if(!document.querySelector("#description-placeholder").hidden){
+                console.log("Oh, the video doesn't even have a description!");
+                changedDescription = true;//this is kind of a lie, but does what we want it to, kind of
+                noDescription = true;
+                return;
+            }
+            console.log("Failed to find main video description on page!");
+        }
         var videoDescription = data[0].snippet.description;
         var pageTitle = document.querySelector("h1.style-scope > yt-formatted-string");
         if (pageDescription != null && videoDescription != null) {
@@ -241,10 +252,10 @@ const DESCRIPTION_POLLING_INTERVAL = 200;
     // So this is the workaround. Ideally injecting directly the object that contains the decsription or modifying the behavior of these buttons is better.
     // Run separately from changeTitles() to be more responsive. Hopefully won't cause race condition. Shouldn't, but might.
     function replaceVideoDescCached() {
-        if (!changedDescription) {
+        if (!changedDescription || noDescription) {
             return;
         }
-        var pageDescription = document.querySelector("yt-attributed-string > span");
+        var pageDescription = document.querySelector("#snippet yt-attributed-string > span");
         if (pageDescription != null && pageDescription.attributes["changed"] == undefined) {
             pageDescription.attributes["changed"] = true;
             if(useTrusted){

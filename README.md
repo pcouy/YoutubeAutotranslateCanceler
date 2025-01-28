@@ -1,6 +1,6 @@
 :warning: According to the [most recent user feedback on GreasyFork](https://greasyfork.org/en/scripts/374453-youtube-auto-translate-canceler/feedback), the script in this appears to no longer work. Since I no longer get auto-translated titles in my YouTube, I am not able to try and fix it or test pull requests. If you want to maintain a fork of this project, let me know so I can link to your repo here before archiving this one. :warning:
 
-You can review [forks of this repo](https://github.com/pcouy/YoutubeAutotranslateCanceler/network) in hope that one of them still works (I would check [the most recently updated fork](https://github.com/overlimit/YoutubeAutotranslateCanceler) first)
+You can review [forks of this repo](https://github.com/pcouy/YoutubeAutotranslateCanceler/network) in hope that one of them still works (I would check [the most recently updated fork](https://github.com/adriaan1313/YoutubeAutotranslateCanceler) first)
 
 # YoutubeAutotranslateCanceler
 
